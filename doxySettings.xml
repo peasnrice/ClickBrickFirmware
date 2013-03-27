@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DoxySettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <SettingsFile>C:\Users\Andy\DropBox\School\Capstone\Software\Clickbrick Firmware\Andy\ClickBrickFirmware\ClickBrickFirmware\doxySettings.xml</SettingsFile>
+  <ProjectName>ClickBrickFirmware</ProjectName>
+  <DoxyExePath>C:\Users\Andy\AppData\Local\Atmel\AtmelStudio\6.0\Extensions\Atmel\Doxygen Integrator\6.0.0.27\Doxygen/doxygen.exe</DoxyExePath>
+  <UseDefaultSettings>true</UseDefaultSettings>
+  <GenerateAsPartOfBuild>false</GenerateAsPartOfBuild>
+  <ConfigFilePath>C:\Users\Andy\DropBox\School\Capstone\Software\Clickbrick Firmware\Andy\ClickBrickFirmware\ClickBrickFirmware\doxyfile</ConfigFilePath>
+  <OutputDirPath>C:\Users\Andy\DropBox\School\Capstone\Software\Clickbrick Firmware\Andy\ClickBrickFirmware\ClickBrickFirmware\doxygen</OutputDirPath>
+  <ShowErrorsAndWarnings>false</ShowErrorsAndWarnings>
+</DoxySettings>
