@@ -13,6 +13,7 @@ uint8_t getTimeHour();
 uint8_t getTimeMinute();
 uint8_t getTimeSecond();
 void setTime(uint8_t hour,uint8_t minute,uint8_t second,uint8_t dow,uint8_t day,uint8_t month,uint8_t year);
+void setTimeFromString(char* timeString);
 void setTimeYear(uint8_t year);
 void setTimeMonth(uint8_t month);
 void setTimeDay(uint8_t day);

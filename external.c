@@ -11,6 +11,7 @@
 
 #include <avr/io.h>
 
+uint8_t maxRecNum;
 uint8_t researchPeriod;
 uint8_t invertColours;
 uint8_t modifiedTimeFlag;

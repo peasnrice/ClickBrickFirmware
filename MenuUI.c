@@ -85,6 +85,7 @@ char *settingsArray[] = {"Clock", "Invert", "Reset" };
 uint8_t monthDays[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
 char *monthNames[12] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"};
 
+extern uint8_t maxRecNum;
 
 void initMenuUI(void){
 selectionInFrame = 0;	//Keeps track of where to display items in a scrolling menu
@@ -131,7 +132,7 @@ void incrementMenuCursor(){
 		}
 	}
 	else		
-		manipulateTime = INCREMENT;
+		manipulateTime = DECREMENT;
 }
 
 void decrementMenuCursor(){
@@ -145,7 +146,7 @@ void decrementMenuCursor(){
 		}				
 	}
 	else
-		manipulateTime = DECREMENT;
+		manipulateTime = INCREMENT;
 }
 
 //advance to next menu screen with current selection
@@ -205,16 +206,10 @@ void incrementMenuID(){
 		currentMenuID++;		
 	}
 	//[Log - Confirm]
-	else if (currentMenuID == 22){
-		uint8_t numberOfRecords = getUnencrpytedRecordCount();
-		if(numberOfRecords != 0){
-			availableIndex = findSpaceInMemMap(selectedYear,selectedMonth,selectedDate,selectedHour,selectedMinute,selectedSecond);
-		}
-		else{
-			availableIndex = getMemMapStartAddress();
-		}
-		insertRecord(availableIndex,selectedYear,selectedMonth,selectedDate, selectedDay, selectedHour,selectedMinute,selectedSecond,selectedActivity,selectedMood);
-		currentMenuID = 10;		
+	else if (currentMenuID == 22){	
+
+		insertRecord(selectedYear,selectedMonth,selectedDate, selectedDay, selectedHour,selectedMinute,selectedSecond,selectedActivity,selectedMood);
+		currentMenuID = 10;	
 	}
 	//[View Timeline]
 	else if (currentMenuID == 30){
@@ -252,19 +247,19 @@ void incrementMenuID(){
 	else if (currentMenuID == 41){
 		uint8_t numberOfRecords = getUnencrpytedRecordCount();
 		if(numberOfRecords != 0){
-			iter = getMemMapStartAddress();
-			selectedRecord = (selectionInMenu + iter) % 40;
+			iter = getMemMapStartIndex();
+			selectedRecord = (selectionInMenu + iter) % maxRecNum;
 			address = getMemMapElement(selectedRecord);
 		}
 		else{		
-			selectedYear = getTimeYear();
-			selectedMonth = getTimeMonth();
-			selectedDate = getTimeDate();
-			selectedDay = getTimeDay();
-			selectedHour = getTimeHour();
 			selectedMinute = getTimeMinute();
 			selectedSecond = getTimeSecond();
 		}		
+		selectedYear = getTimeYear();
+		selectedMonth = getTimeMonth();
+		selectedDate = getTimeDate();
+		selectedDay = getTimeDay();
+		selectedHour = getTimeHour();
 		firstPass = 0;
 		currentMenuID = 42;
 	}
@@ -296,21 +291,16 @@ void incrementMenuID(){
 	
 	//[Add - Confirm]
 	else if (currentMenuID == 46){
-		uint8_t numberOfRecords = getUnencrpytedRecordCount();
-		if(numberOfRecords != 0){
-			availableIndex = findSpaceInMemMap(selectedYear,selectedMonth,selectedDate,selectedHour,selectedMinute,0);
-		}			
-		else{
-			availableIndex = getMemMapStartAddress();
-		}			
-		insertRecord(availableIndex, selectedYear,selectedMonth,selectedDate, selectedDay, selectedHour,selectedMinute,0,selectedActivity,selectedMood);
+		
+		insertRecord(selectedYear,selectedMonth,selectedDate, selectedDay, selectedHour,selectedMinute,0,selectedActivity,selectedMood);
+		
 		currentMenuID = 10;
 	}
 	
 	//[Edit - choose time]
 	else if (currentMenuID == 50){
-		start = getMemMapStartAddress();
-		selectedIndex = (selectionInMenu + start) % 40;
+		start = getMemMapStartIndex();
+		selectedIndex = (selectionInMenu + start) % maxRecNum;
 		address = getMemMapElement(selectedIndex);
 		activityInRecord = getActivity(address);
 		moodInRecord = getMood(address);
@@ -367,8 +357,8 @@ void incrementMenuID(){
 	
 	//[Remove - choose record]
 	else if (currentMenuID == 60){
-		iter = getMemMapStartAddress();
-		selectedRecord = (selectionInMenu + iter) % 40;
+		iter = getMemMapStartIndex();
+		selectedRecord = (selectionInMenu + iter) % maxRecNum;
 		address = getMemMapElement(selectedRecord);
 		selectedActivity = getActivity(address);
 		selectedMood = getMood(address);
@@ -886,6 +876,7 @@ void drawLogConfirm(uint8_t screenType){
 }
 
 void drawTimeline(void){
+	uint8_t iter_higher_than_end = 0;
 	uint8_t menuPage = 0;
 	uint8_t totalPages = 0;
 	char tempString[3];
@@ -895,18 +886,23 @@ void drawTimeline(void){
 	printTime();
 	printStringOnLine(1,"    Timeline      ", 1,NONE);
 
-	
 	uint8_t index = 0;
 	
-	start = getMemMapStartAddress();
-	end = getMemMapEndAddress();
+	start = getMemMapStartIndex();
+	end = getMemMapEndIndex();
 	iter = start;
+	
+	if(iter > end)
+		iter_higher_than_end = 1;
 		
 	uint8_t currentMenuLength = getUnencrpytedRecordCount();
 	
 	for (uint8_t i = 0; i < cellsPerFrame; i++){
 		char hourString[3] = {"0"};
 		char minuteString[3] = {"0"};
+		char yearString[3] = {"0"};
+		char monthString[3] = {"0"};
+		char dateString[3] = {"0"};
 		
 		if (currentMenuLength == 0){
 			printTimeLineIsEmpty();
@@ -917,8 +913,32 @@ void drawTimeline(void){
 		menuPage = (selectionInMenu/cellsPerFrame);	
 		index = ((menuPage)*cellsPerFrame)+i;
 		
-		iter = (index + start) % 40;
+		iter = (index + start) % maxRecNum;
+
+		selectedDate = getDate(getMemMapElement(iter));
+		itoa(selectedDate, tempString, 10);
+		if (selectedDate < 10)
+			strcat(dateString, tempString);
+		else{
+			strcpy(dateString, tempString);
+		}
 		
+		selectedMonth = getMonth(getMemMapElement(iter));
+		itoa(selectedMonth, tempString, 10);
+		if (selectedMonth < 10)
+			strcat(monthString, tempString);
+		else{
+			strcpy(monthString, tempString);
+		}
+
+		selectedYear = getYear(getMemMapElement(iter));
+		itoa(selectedYear, tempString, 10);
+		if (selectedYear < 10)
+			strcat(yearString, tempString);
+		else{
+			strcpy(yearString, tempString);
+		}
+
 		selectedHour = getHour(getMemMapElement(iter));
 		itoa(selectedHour, tempString, 10);
 		if (selectedHour < 10)
@@ -935,8 +955,18 @@ void drawTimeline(void){
 			strcpy(minuteString, tempString);
 		}
 		
-		if(iter != end){
-			snprintf(timeBuf, sizeof(timeBuf), "%s%s%s%s", hourString, ":", minuteString, "                  "); 
+		//USART_Sendbyte(totalPages);
+		//USART_Sendbyte(menuPage);
+		//USART_Sendbyte(index);
+		//USART_Sendbyte(iter);
+		//USART_Sendbyte(start);
+		//USART_Sendbyte(end);
+		
+		//USART_Sendbyte(iter_higher_than_end);
+		if(iter <= end || (i == 0 && currentMenuLength >= maxRecNum) || (iter_higher_than_end == 1)){
+			if (iter <= end)
+				iter_higher_than_end = 0;
+			snprintf(timeBuf, sizeof(timeBuf), "%s%s%s%s%s%s%s%s%s%s", dateString, "/", monthString, "/", yearString, " - ", hourString, ":", minuteString, "  "); 
 			snprintf(buf, sizeof(buf), "%s%s%s%s", activityArray[getActivity(getMemMapElement(iter))], "-", moodArray[getMood(getMemMapElement(iter))], "                  "); 	
 			timeBuf[17] = ' ';
 			buf[17] = ' ';
@@ -952,7 +982,7 @@ void drawTimeline(void){
 				printStringOnLine(i*2+yOffset,timeBuf, 0,NOBOXMENU);
 				printTimelineStringOnLine(i*2+yOffset+1,buf, 0,faceArray[getMood(getMemMapElement(iter))]);
 			}
-		}						
+		}	
 		else{
 			printStringOnLine(i*2+yOffset,"                  ", 0,NOBOXMENU);
 			printStringOnLine(i*2+yOffset+1,"                  ", 0,NOBOXMENU);
@@ -1004,6 +1034,7 @@ void drawModifyTimeslot(uint8_t screenType){
 //go through usedElements list to see which memory cells have valid data
 //make a note of the index values that contain valid data
 //now we know what indexes to look at when we want to print data to the screen.
+	uint8_t iter_higher_than_end = 0;
 	char tempString[3];
 	
 	uint8_t menuPage = 0;
@@ -1033,9 +1064,12 @@ void drawModifyTimeslot(uint8_t screenType){
 	
 	uint8_t index = 0;
 		
-	start = getMemMapStartAddress();
-	end = getMemMapEndAddress();
+	start = getMemMapStartIndex();
+	end = getMemMapEndIndex();
 	iter = start;
+	
+	if(iter > end)
+		iter_higher_than_end = 1;
 		
 	uint8_t currentMenuLength = getUnencrpytedRecordCount();
 		
@@ -1052,7 +1086,7 @@ void drawModifyTimeslot(uint8_t screenType){
 	menuPage = (selectionInMenu/cellsPerFrame);
 	index = ((menuPage)*cellsPerFrame)+i;
 
-	iter = (index + start) % 40;
+	iter = (index + start) % maxRecNum;
 		
 	selectedHour = getHour(getMemMapElement(iter));
 	itoa(selectedHour, tempString, 10);
@@ -1070,7 +1104,9 @@ void drawModifyTimeslot(uint8_t screenType){
 		strcpy(minuteString, tempString);
 	}
 
-	if(iter != end){
+		if(iter <= end || (i == 0 && currentMenuLength >= maxRecNum) || (iter_higher_than_end == 1)){
+		if (iter <= end)
+			iter_higher_than_end = 0;
 		snprintf(buf, sizeof(buf), "%s%s%s%s", hourString, ":", minuteString, "|"); 
 		snprintf(buf, sizeof(buf), "%s%s%s%s%s", buf, activityArray[getActivity(getMemMapElement(iter))], "-", moodArray[getMood(getMemMapElement(iter))], "                  "); 	
 		timeBuf[17] = ' ';
@@ -1103,14 +1139,18 @@ void drawChooseStartTime(void){
 	printStringOnLine(1,"     Timeline     ", 1,NOBOXMENU);	
 	printStringOnLine(2,"                  ", 0,NOBOXMENU);		
 	
-	iter = getMemMapStartAddress();
-	iter = (iter + selectedRecord) % 40;
+	iter = getMemMapStartIndex();
+	iter = (iter + selectedRecord) % maxRecNum;
 	
 	if (firstPass == 0){
 		timeSelection = 0;
 		
 		if(numberOfRecords != 0){
 			//find closest time to selected time in time slot
+			selectedYear = getYear(getMemMapElement(iter));
+			selectedMonth = getMonth(getMemMapElement(iter));
+			selectedDay = getTimeDate(getMemMapElement(iter));
+			selectedDOW = getTimeDay(getMemMapElement(iter));
 			selectedHour = getHour(getMemMapElement(iter));
 			selectedMinute = getMinute(getMemMapElement(iter));
 		}			
@@ -1257,6 +1297,8 @@ void drawSettings(void){
 	}		
 }
 
+
+//Allows user to configure the time
 void drawChangeTime(void){
 	selectedYear = getTimeYear();
 	selectedMonth = getTimeMonth();
@@ -1366,6 +1408,8 @@ void drawChangeTime(void){
 			setTimeYear(selectedYear);
 		}
 	}
+	
+	setTimeDOW(calculateDOW(selectedDay,selectedMonth,selectedYear));
 	
 	printTime();
 	printStringOnLine(1,"  Time Settings   ", 1,NOBOXMENU);

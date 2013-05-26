@@ -2,7 +2,7 @@
 * main.c
 *
 * Created: 2/14/2013 2:57:52 PM
-*  Author: Andrew Evans
+* Author: Andrew Evans, Shawn Stoute, Sandra Witzen
 */
 
 #include <avr/io.h>
@@ -34,10 +34,13 @@ void checkAgeAndEncrypt(void);
 extern uint8_t researchPeriod;
 extern uint8_t modifiedTimeFlag;
 extern volatile uint8_t breakFromUSARTFlag;
+extern uint8_t maxRecNum;
 
 static uint16_t startDateArray[6];
 static uint16_t endDateArray[6];
 static uint16_t currentTimeArray[6];
+
+
 
 //year,month,day,dow,hour,minute,second,activity,mood
 
@@ -46,6 +49,8 @@ static uint16_t currentTimeArray[6];
 
 int main(void)
 {
+	
+	//initEEPROM();
 	USART_Init(MYUBRR);
 	I2CInit();
 	//resetRecords();
@@ -55,7 +60,9 @@ int main(void)
 	initLCD();
 	initSPI();
 	clearLCD();
+
 	
+	maxRecNum = 4;
 	breakFromUSARTFlag = 0;
 	researchPeriod = 0;
 	modifiedTimeFlag = 0;
@@ -94,10 +101,17 @@ int main(void)
 	updateUI();
 	
 	uint8_t checksum = 0;
+	uint8_t daynow = 0;
+	uint8_t dayprevious = 0;
 	uint8_t timeprevious = 0;
 	uint8_t timenow = 0;
-	uint8_t nesInput = 0;
+	//uint8_t nesInput = 0;
 	uint8_t buttonInput = 0;
+	
+	//USART_Send_string("helllllo");
+	//USART_Send_string_CRLF("Aloha, welcome the the mirror world");
+	
+	//setMenuID(80);
 	
 	while(1)
 	{
@@ -105,10 +119,13 @@ int main(void)
 		//update screen on the minute
 		timenow = getTimeMinute();
 		if(timenow != timeprevious){
+			daynow = getTimeDate();
+			if(daynow != dayprevious)
+				checkAgeAndEncrypt();
 			researchPeriodCheck();
 			updateUI();
+			dayprevious = daynow;
 			timeprevious = timenow;
-			checkAgeAndEncrypt();
 		}
 		
 
@@ -121,7 +138,6 @@ int main(void)
 		
 		//nesInput = 0;
 		//researchPeriod = 0;
-		
 		if(buttonInput){
 			//up
 			if (buttonInput == 1){
@@ -170,22 +186,29 @@ int main(void)
 				}
 			}
 			while(buttonInput){
-				nesInput = checkForNESButtons();
+				//nesInput = checkForNESButtons();
 				buttonInput = checkForButtons();
 				//if the user is holding down the button,
 				//we still want to refresh screen every minute on the minute
 				timenow = getTimeMinute();
 				if(timenow != timeprevious){
+					daynow = getTimeDate();
+					if(daynow != dayprevious)
+						checkAgeAndEncrypt();
 					updateUI();
 					checkAgeAndEncrypt();
+					dayprevious = daynow;
 					timeprevious = timenow;
 				}
 			}
 		}
 		
 		if(getCurrentMenuID() == 80){
+			// XXXX
+			///*
 			EIMSK |= (1<<INT2);
 			sei();
+			//*/
 			char* tempString = USART_Receive_CRLF();
 			if(breakFromUSARTFlag == 0){
 				if(strcmp(tempString,"INFO") == 0){
@@ -218,6 +241,18 @@ int main(void)
 					tempString = USART_Receive_CRLF();
 					setModulus(tempString);
 					USART_Send_string_CRLF("device Modulus recorded");
+					
+					//Device Time
+					printStringOnLine(2,"                  ",0,0);
+					printStringOnLine(3,"                  ",0,0);
+					printStringOnLine(4,"  Configuration   ",0,0);
+					printStringOnLine(5,"      Tool        ",0,0);
+					printStringOnLine(6,"                  ",0,0);
+					printStringOnLine(7,"   Setting Time   ",0,0);
+					
+					tempString = USART_Receive_CRLF();
+					setTimeFromString(tempString);
+					USART_Send_string_CRLF("Date Recorded");
 				
 					//start Date
 					printStringOnLine(2,"                  ",0,0);
@@ -284,6 +319,22 @@ int main(void)
 					loadFacesMenu();
 					USART_Send_string_CRLF("faces recorded");
 
+					startDateArray[0] = getStartDateYear();
+					startDateArray[1] = getStartDateMonth();
+					startDateArray[2] = getStartDateDay();
+					startDateArray[3] = 0;
+					startDateArray[4] = 0;
+					startDateArray[5] = 0;
+					
+					endDateArray[0] = getEndDateYear();
+					endDateArray[1] = getEndDateMonth();
+					endDateArray[2] = getEndDateDay();
+					endDateArray[3] = 0;
+					endDateArray[4] = 0;
+					endDateArray[5] = 0;
+					
+					researchPeriodCheck();
+
 					setMenuID(10);
 					updateUI();
 				}
@@ -299,11 +350,11 @@ int main(void)
 						break;
 					}
 				
-					uint8_t s = getMemMapStartAddress();
+					uint8_t s = getMemMapStartIndex();
 					uint8_t tempIndex = s;
 					for(uint8_t i = s; i < numOfUnencryptedRec; i++){
 						setEncryptedRecord(tempIndex);
-						tempIndex = (tempIndex + 1) % 40;
+						tempIndex = (tempIndex + 1) % maxRecNum;
 					};
 					
 					uint16_t devID = getDeviceID();
@@ -338,7 +389,10 @@ int main(void)
 				else
 					USART_Send_string_CRLF("Unknown Command");
 			}
+			// XXX
+			
 			cli();
+			
 			breakFromUSARTFlag = 0;	
 			setMenuID(10);
 			updateUI();	
@@ -359,6 +413,9 @@ void putToSleep(void){
 	printStringOnLine(5,"                  ",1,0);
 	printStringOnLine(6,"                  ",1,0);
 	printStringOnLine(7,"                  ",1,0);
+	
+	// XXX
+	
 	EIMSK |= (1<<INT5);
 	set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 	cli();
@@ -366,6 +423,7 @@ void putToSleep(void){
 	sei();
 	sleep_cpu();
 	sleep_disable();
+	
 }
 
 void researchPeriodCheck(void){
@@ -400,14 +458,18 @@ void checkAgeAndEncrypt(void){
 		currentTimeArray[4] = getTimeMinute();
 		currentTimeArray[5] = getTimeSecond();
 
-		uint8_t startIndex = getMemMapStartAddress();	
+		uint8_t startIndex = getMemMapStartIndex();	
 		uint8_t index = startIndex;
-		uint8_t endIndex = getMemMapEndAddress();
+		uint8_t endIndex = getMemMapEndIndex();
 		uint16_t recordTimeArray[6];
 		
+		//USART_Sendbyte(startIndex);
+		//USART_Sendbyte(endIndex);
 		
-		for(uint8_t i = index; i < numOfRec; i++){
-			uint16_t address = getMemMapElement(index);
+		
+		for(uint8_t i = endIndex-1; i != endIndex; i--){
+			//USART_Sendbyte(i);
+			uint16_t address = getMemMapElement(i);
 			recordTimeArray[0] = getYear(address);
 			recordTimeArray[1] = getMonth(address);
 			recordTimeArray[2] = getDate(address);
@@ -415,17 +477,27 @@ void checkAgeAndEncrypt(void){
 			recordTimeArray[4] = getMinute(address);
 			recordTimeArray[5] = getSecond(address);
 			
+			//for(uint8_t j = 0; j < 6; j++){
+				//USART_Sendbyte(recordTimeArray[j]);
+				//USART_Sendbyte(currentTimeArray[j]);
+			//}
+			
 			comparisonResult = fortyEightHoursApart(&currentTimeArray, &recordTimeArray);
+			//USART_Sendbyte(comparisonResult);
 			
 			if(comparisonResult == 1){
-				setEncryptedRecord(index);
-				USART_Sendbyte(0xFF);
-				deleteRecord(index);
+				setEncryptedRecord(i);
+				//USART_Sendbyte(0xFF);
+				deleteRecord(i);
 			}			
-			index = (index+1)%40;
+			if(i == 0 && 0 != endIndex)
+				i = maxRecNum;
 		}
 	}		
 }
+
+
+// XXXX
 
 ISR(INT5_vect){
 	cli();

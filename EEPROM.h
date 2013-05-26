@@ -14,6 +14,10 @@
 #define eepromwrite 0b10100000
 #define eepromread 0b10100001
 
+#define MAXRECNUM 4
+
+void initEEPROM(void);
+
 //Read and write functions for external eeprom
 void extEEPROMWrite(uint16_t addr, uint8_t data);
 uint8_t extEEPROMRead (uint16_t addr);
@@ -35,12 +39,12 @@ void saveDataRecordToEEPROM(uint16_t index, uint8_t cell, uint8_t data);
 uint16_t getMemMapElement(uint8_t index);
 
 //sets the base address of the mem map circular array
-void setMemMapStartAddress(uint8_t);
-void setMemMapEndAddress(uint8_t);
+void setMemMapStartIndex(uint8_t);
+void setMemMapEndIndex(uint8_t);
 
 //returns the base address of the mem map circular array
-uint8_t getMemMapStartAddress(void);
-uint8_t getMemMapEndAddress(void);
+uint8_t getMemMapStartIndex(void);
+uint8_t getMemMapEndIndex(void);
 
 //saves address to memory map in location specified by index 
 void setMemMapElement(uint8_t index, uint16_t data);

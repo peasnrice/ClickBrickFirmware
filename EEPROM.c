@@ -4,7 +4,7 @@
  * Created: 2/14/2013 3:01:43 PM
  *  Author: Andrew Evans & Shawn Stoute
  */ 
-
+#include <avr/io.h>
 #include <avr/eeprom.h>
 #include <util/delay.h>
 #include "usart.h"
@@ -18,7 +18,7 @@ uint8_t EEMEM NonVolatileActivityString[306]; //(16 activities * 18 chars long)+
 uint8_t EEMEM NonVolatileMoodString[306];
 uint8_t EEMEM NonVolatileFaceInts[16];
 //A memory map of record memory locations, will be sorted by time contained within recorded data
-uint16_t EEMEM memoryMapExtEEPROM[40];
+uint16_t EEMEM memoryMapExtEEPROM[MAXRECNUM];
 //as the memory will require constant adding and removal of data entries, we need queue functionality
 //we want to minimise writes so a circular array seems to be the best option
 uint8_t EEMEM memoryMapStartAddress;
@@ -41,9 +41,19 @@ uint8_t EEMEM invertColourSetting;
 
 uint8_t SRAMstring[306];
 
+void initEEPROM(void){
+	DDRD |= (1<<PD7);
+}
+
 //Writes a byte of data to a specified address in external eeprom
 void extEEPROMWrite (uint16_t addr, uint8_t data)
 {
+	//USART_Send_string_CRLF("Begin Writing!");
+	//USART_Sendbyte(addr>>8);
+	//USART_Sendbyte(addr);
+	//USART_Sendbyte(data);
+	DDRD |= (1<<7);
+	PORTD &= ~(1<<PD7);
 	I2CStart();
 	I2CWriteByte(eepromwrite);
 	I2CWriteByte(addr>>8);
@@ -51,11 +61,17 @@ void extEEPROMWrite (uint16_t addr, uint8_t data)
 	I2CWriteByte(data);
 	I2CStop();
 	_delay_ms(5);
+	PORTD |= (1<<PD7);
+	//USART_Send_string_CRLF("Finished Writing!");
+	//USART_Sendbyte(addr>>8);
+	//USART_Sendbyte(addr);
+	//USART_Sendbyte(data);
 }
 
 //Reads a byte of data to from a specified address in external eeprom
 uint8_t extEEPROMRead (uint16_t addr)
 {
+	//USART_Send_string_CRLF("Reading!");
 	uint8_t* data = 0x00;
 	I2CStart();
 	I2CWriteByte(eepromwrite);
@@ -65,7 +81,9 @@ uint8_t extEEPROMRead (uint16_t addr)
 	I2CWriteByte(eepromread);
 	I2CReadByte(data,0);
 	I2CStop();
-	_delay_ms(5);
+	//USART_Sendbyte(addr>>8);
+	//USART_Sendbyte(addr);
+	//USART_Sendbyte(*data);
 	return *data;
 }
 
@@ -149,11 +167,11 @@ uint16_t getMemMapElement(uint8_t index){
 }
 
 //updates base and end address of mem map array
-void setMemMapStartAddress(uint8_t address){
+void setMemMapStartIndex(uint8_t address){
 	eeprom_update_byte(&memoryMapStartAddress, address);
 }
 
-void setMemMapEndAddress(uint8_t address){
+void setMemMapEndIndex(uint8_t address){
 	eeprom_update_byte(&memoryMapEndAddress, address);
 }
 
@@ -162,11 +180,11 @@ void setMemMapActiveAddress(uint8_t address){
 }
 
 //returns the base address of the mem map circular array
-uint8_t getMemMapStartAddress(void){
+uint8_t getMemMapStartIndex(void){
 	return eeprom_read_byte(&memoryMapStartAddress);
 }
 
-uint8_t getMemMapEndAddress(void){
+uint8_t getMemMapEndIndex(void){
 	return eeprom_read_byte(&memoryMapEndAddress);
 }
 

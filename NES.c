@@ -39,15 +39,19 @@ uint8_t checkForNESButtons(void){
 	nesButtons = NESRead();
 
 	if(!((1 << NORTH) & nesButtons)){
+		//USART_Sendbyte(1);
 		return 1;
 	}
 	else if(!((1 << SOUTH) & nesButtons)){
+		//USART_Sendbyte(2);
 		return 2;
 	}
 	else if(!((1 << EAST) & nesButtons) || !((1 << START) & nesButtons) || !((1 << A) & nesButtons)){
+		//USART_Sendbyte(3);
 		return 3;
 	}
 	else if(!((1 << WEST) & nesButtons) || !((1 << SELECT) & nesButtons) || !((1 << B) & nesButtons)){
+		//USART_Sendbyte(4);
 		return 4;
 	}
 	else

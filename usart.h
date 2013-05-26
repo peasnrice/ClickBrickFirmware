@@ -10,10 +10,12 @@
 #define USART_H
 
 
-#define FOSC 16000000 // Clock Speed
+#define FOSC 16000000UL // Clock Speed
+//#define FOSC 8000000UL
 #define USART_BAUDRATE 9600
-#define BAUD_PRESCALE 16
+//#define BAUD_PRESCALE 16
 #define MYUBRR (((FOSC / (USART_BAUDRATE * 16UL))) - 1 )
+//#define MYUBRR (((((FOSC * 10) / (8L * USART_BAUDRATE)) + 5) / 10) - 1)
 
 void USART_Init( unsigned int ubrr);
 void enableUSART(void);

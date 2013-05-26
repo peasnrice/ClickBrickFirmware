@@ -139,15 +139,46 @@ uint8_t fortyEightHoursApart(uint16_t times_1[], uint16_t times_2[]){
 	*time_2 = 0;
 	
 
-			
+	
 	convertToEpoch(times_1,time_1);
 	convertToEpoch(times_2,time_2);
 
 	int32_t time_diff = *time_1 - *time_2;
+	//USART_Sendbyte(*time_1>>24);
+	//USART_Sendbyte(*time_1>>16);
+	//USART_Sendbyte(*time_1>>8);
+	//USART_Sendbyte(*time_1);
+	//
+	//USART_Sendbyte(*time_2>>24);
+	//USART_Sendbyte(*time_2>>16);
+	//USART_Sendbyte(*time_2>>8);
+	//USART_Sendbyte(*time_2);
 	
 	if(time_diff >= 172800){
 		return 1;
-	}		
+	}
 	else
 		return 0;
+}
+
+//using Zeller's Congruence
+//http://ideone.com/CkDGvY
+int8_t calculateDOW(uint8_t day, uint8_t month, uint8_t year){
+  if(month == 1){
+	  month = 13;
+	  year--;
+  }
+  if (month == 2){
+	  month = 14;
+	  year--;
+  }
+  uint8_t q = day;
+  uint8_t m = month;
+  uint8_t k = year % 100;
+  uint8_t j = year / 100;
+  uint8_t h = q + 13*(m+1)/5 + k + k/4 + j/4 + 5*j;
+  h = h % 7;
+  h = ((h + 6) % 7)+1;
+  //USART_Sendbyte(h);
+  return h;
 }

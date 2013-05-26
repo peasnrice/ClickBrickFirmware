@@ -143,7 +143,6 @@ void printStringOnLine(uint8_t line, char lineText[], uint8_t invert, uint8_t op
 		invert = !invert;
 	
 	uint8_t charLine = 0;
-	//line *= 16;
 	line *= 21;
 	line++;
 	
@@ -151,7 +150,6 @@ void printStringOnLine(uint8_t line, char lineText[], uint8_t invert, uint8_t op
 	//write command
 	SPI_TX(0x01);
 	//Line Address
-	//for (unsigned char l = line; l < line + 16; l++){
 	for (unsigned char l = line; l < line + 21; l++){
 		if(l != line)
 			SPI_TX(0x00);
@@ -315,7 +313,7 @@ void printTimelineStringOnLine(uint8_t line, char lineText[], uint8_t invert, ui
 		SPI_TX(l);
 		//LineBits
 			
-		for(uint8_t i = 0; i < 16; i++){
+		for(uint8_t i = 0; i < 18; i++){
 			if (invert == 0)
 			SPI_TX(pgm_read_byte(font8x21+(((unsigned char)lineText[i]-32)*21+charLine)));
 			//SPI_TX(font8x16[(((unsigned char)lineText[i]-32)*16+charLine)]);
@@ -323,6 +321,7 @@ void printTimelineStringOnLine(uint8_t line, char lineText[], uint8_t invert, ui
 			SPI_TX(~(pgm_read_byte(font8x21+(((unsigned char)lineText[i]-32)*21+charLine))));
 			//SPI_TX(~(font8x16[(((unsigned char)lineText[i]-32)*16+charLine)]));
 		}
+		/*
 		if(face == TIRED){
 			if (invert == 0){
 				SPI_TX(pgm_read_byte(tiredFace+(charLine*2)));
@@ -403,6 +402,7 @@ void printTimelineStringOnLine(uint8_t line, char lineText[], uint8_t invert, ui
 				SPI_TX(~pgm_read_byte(angryFace+(charLine*2)+1));
 			}
 		}
+		*/
 		charLine++;
 	}			
 

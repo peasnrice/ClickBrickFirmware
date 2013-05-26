@@ -36,4 +36,6 @@ uint8_t compareTimes(uint16_t times_1[], uint16_t times_2[]);
 
 uint8_t fortyEightHoursApart(uint16_t times_1[], uint16_t times_2[]);
 
+int8_t calculateDOW(uint8_t currentDayOfMonth, uint8_t currentMonth, uint8_t currentYear);
+
 #endif /* EPOCHTIME_H_ */

@@ -151,6 +151,39 @@ void setTime(uint8_t hour,uint8_t minute,uint8_t second,uint8_t dow,uint8_t day,
 	DS1307Write(0x06,dec2bcd(year));	//set year
 }
 
+void setTimeFromString(char* timeString){
+	uint8_t i = 0;
+	char *integerStringPointer = strtok(timeString, ",");
+	while(integerStringPointer != 0x00){
+		switch (i)
+		{
+			case 0:
+				setTimeMonth(atoi(integerStringPointer));
+				break;
+			case 1:
+				setTimeDay(atoi(integerStringPointer));
+				break;				
+			case 2:
+				setTimeYear(atoi(integerStringPointer));
+				break;
+			case 3:
+				setTimeHour(atoi(integerStringPointer));
+				break;	
+			case 4:
+				setTimeMinute(atoi(integerStringPointer));
+				break;		
+			case 5:
+				setTimeSecond(atoi(integerStringPointer));
+				break;
+			case 6:
+				setTimeDOW(atoi(integerStringPointer));
+				break;
+		}
+		i++;
+		integerStringPointer = strtok(0x00,",");
+	}	
+}
+
 void setTimeYear(uint8_t year){
 	DS1307Write(0x06,dec2bcd(year));	//set year
 }

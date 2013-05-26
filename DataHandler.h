@@ -13,7 +13,7 @@
 void resetRecords();
 
 //deletes record located at particular position within memory map
-void deleteRecord(uint16_t memMapLocation);
+void deleteRecord(uint8_t memMapLocation);
 void deleteOldestRecord(void);
 
 //set record and allocate it a space in memory or set a record with a specified address
@@ -41,8 +41,7 @@ void setRecordByAddress(uint16_t address,
 						uint8_t activity, 
 						uint8_t mood);
 
-void insertRecord(uint8_t insertIndex,
-						uint8_t year,
+void insertRecord(		uint8_t year,
 						uint8_t month,
 						uint8_t day,
 						uint8_t dow,
@@ -63,6 +62,10 @@ uint8_t findSpaceInMemMap(uint16_t year,
 
 void setActivityByAddress(uint16_t address, uint8_t activity);
 void setMoodByAddress(uint16_t address, uint8_t mood);
+void setYearByAddress(uint16_t address, uint8_t year);
+void setMonthByAddress(uint16_t address, uint8_t month);
+void setDayByAddress(uint16_t address, uint8_t day);
+void setDOWByAddress(uint16_t address, uint8_t dow);
 void setHourByAddress(uint16_t address, uint8_t hour);
 void setMinuteByAddress(uint16_t address, uint8_t minute);
 

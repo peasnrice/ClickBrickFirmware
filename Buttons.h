@@ -9,10 +9,21 @@
 #ifndef BUTTONS_H
 #define BUTTONS_H
 
-#define UP 3	
-#define DOWN 4	
+//DEVELOPMENT
+
+#define UP 3
+#define DOWN 4
 #define BACK 5
 #define SELECT 2
+
+
+//DEPLOYMENT
+/*
+#define UP 7
+#define DOWN 5
+#define SELECT 6
+#define BACK 4
+*/
 
 void initButtons();
 uint8_t checkForButtons();
